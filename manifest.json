@@ -1,0 +1,49 @@
+{
+  "background": {
+    "persistent": false,
+    "page": "background.html"
+  },
+  "browser_action": {
+    "default_icon": {
+      "16": "ico/logo_16x16.png",
+      "32": "ico/logo_32x32.png",
+      "48": "ico/logo_48x48.png",
+      "128": "ico/logo_128x128.png"
+    },
+    "default_title": "Amazon Extension"
+  },
+  "content_scripts": [
+    {
+      "all_frames": false,
+      "css": [
+        "styles/content.css"
+      ],
+      "js": [
+        "node_modules/jquery/dist/jquery.min.js",
+        "scripts/content.js"
+      ],
+      "matches": [
+        "https://www.amazon.co.uk/*"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "default_locale": "en",
+  "description": "__MSG_appDescription__",
+  "icons": {
+    "16": "ico/logo_16x16.png",
+    "32": "ico/logo_32x32.png",
+    "48": "ico/logo_48x48.png",
+    "128": "ico/logo_128x128.png"
+  },
+  "manifest_version": 2,
+  "name": "__MSG_appName__",
+  "options_page": "options.html",
+  "permissions": [
+    "activeTab",
+    "cookies",
+    "https://*.amazon.co.uk/*"
+  ],
+  "update_url": "https://clients2.google.com/service/update2/crx",
+  "version": "1.0.1"
+}
