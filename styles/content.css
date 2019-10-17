@@ -1,0 +1,16 @@
+.amazon-extension {
+    border: 1px solid #000;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.amazon-extension table {
+    border-collapse: collapse;
+    font-size: 25px;
+}
+
+.amazon-extension table tr td {
+    border: 1px solid;
+    padding: 10px;
+}
