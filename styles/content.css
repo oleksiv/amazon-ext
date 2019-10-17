@@ -1,16 +1,100 @@
-.amazon-extension {
-    border: 1px solid #000;
-    border-radius: 5px;
-    padding: 15px;
-    margin-bottom: 15px;
+.amazon-bar {
+    width: 0;
+    flex-shrink: 0;
+    position: relative;
+    transition: width 0.2s ease;
+    border-left: 1px solid #000;
 }
 
-.amazon-extension table {
+.amazon-bar-cropper {
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.amazon-toggle-btn {
+    text-align: center;
+    z-index: 999;
+    /* padding: 23px; */
+    /* border: 1px solid; */
+    border-radius: 50%;
+    /* border-bottom-left-radius: 50%; */
+    width: 50px;
+    height: 50px;
+    padding: 14px 16px;
+    font-size: 20px;
+    box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.75);
+    background: #2500ef;
+    color: #fff;
+    position: absolute;
+    left: -59px;
+    top: 112px;
+}
+
+.amazon-toggle-btn.flip {
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+}
+
+.amazon-wrapper {
+    display: flex;
+    flex-direction: row;
+}
+
+.close-btn {
+    cursor: pointer;
+    position: absolute;
+    right: 16px;
+    top: 11px;
+    color: red;
+}
+
+.amazon-bar-absolute {
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 15px;
+    width: 350px;
+}
+
+.ungate-button {
+    display: block;
+    width: 100%;
+    font-size: 25px;
+    background: #2500ef;
+    border: none;
+    color: #fff;
+    padding: 15px;
+    outline: none;
+}
+
+.ungate-button:focus, .ungate-button:active {
+    outline: none;
+}
+
+table.amazon-detail-table {
     border-collapse: collapse;
     font-size: 25px;
 }
 
-.amazon-extension table tr td {
-    border: 1px solid;
+table.amazon-detail-table tr td {
+    border: 1px solid #000;
     padding: 10px;
+}
+
+.text-success {
+    color: green;
+}
+
+.text-danger {
+    color: red;
+}
+
+.bg-danger {
+    background: red;
+}
+
+.bg-success {
+    background: green;
 }

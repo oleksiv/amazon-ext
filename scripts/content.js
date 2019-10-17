@@ -5,39 +5,81 @@ const MESSAGE_TYPE_HAZMAT = 1;
 const MESSAGE_TYPE_UNGATE = 2;
 const MESSAGE_TYPE_RESTRICTIONS = 3;
 
+const BAR_WIDTH = 350;
+
 const ASIN = window.location.href.match(/(?:[/dp/]|$)([A-Z0-9]{10})/i)[1];
 const DOMAIN = 'co.uk';
 
-// Create a container
+const HTML = `
+<div class="amazon-bar">
+    <div class="amazon-toggle-btn"><i class="fa fa-chevron-left"></i></div>
+    <div class="amazon-bar-cropper">
+        <div class="amazon-bar-absolute">
+            <h1 class="amazon-product-title"></h1>
+            <table class="amazon-detail-table"><tbody></tbody></table>
+            <button class="ungate-button">Ungate</button>
+        </div>
+    </div>
+</div>
+`;
+// Create a wrapper
+jQuery('#a-page').wrap('<div class="amazon-wrapper"></div>');
 
-jQuery('#rightCol').prepend('<div class="amazon-extension"><table><tbody></tbody></table></div>');
+// Append bar
+jQuery('.amazon-wrapper').append(HTML);
 
+// 1 Step - Add title
+jQuery('.amazon-bar-absolute').prepend('<h1>' + jQuery('#productTitle').text() + '</h1>');
+
+// Close on button click
+jQuery('.amazon-toggle-btn').on('click', () => {
+    const bar = jQuery('.amazon-bar');
+    if (bar.width()) {
+        bar.css({'width': 0});
+        jQuery('.amazon-toggle-btn').removeClass('flip');
+    } else {
+        bar.css({'width': BAR_WIDTH + 'px'});
+        jQuery('.amazon-toggle-btn').addClass('flip');
+    }
+});
+
+
+jQuery('.ungate-button').on('click', () => {
+    jQuery('.ungate-button').text('Please, wait...');
+
+    chrome.runtime.sendMessage({type: MESSAGE_TYPE_UNGATE, message: ASIN, domain: DOMAIN}, function (response) {
+        let ungated = false;
+
+        if (jQuery(response).find('#myq-application-form-email-input').val()) {
+            ungated = false;
+        } else if (jQuery(response).find("[name='appAction']").val()) {
+            ungated = false;
+            alert("Please Login To Seller Center");
+        } else if (jQuery(response).find("#application_dashboard_table").html()) {
+            ungated = false;
+        } else if (jQuery(response).find(".su-video-page-container").html()) {
+            ungated = false;
+        } else if (jQuery(response).find("#myq-performance-check-heading-failure").html()) {
+            ungated = false;
+        } else {
+            ungated = true;
+        }
+
+        jQuery('.ungate-button').text(ungated ? 'Success' : 'Failed to ungate');
+        if (ungated) {
+            jQuery('.ungate-button').removeClass('bg-danger');
+            jQuery('.ungate-button').addClass('bg-success');
+        } else {
+            jQuery('.ungate-button').removeClass('bg-success');
+            jQuery('.ungate-button').addClass('bg-danger');
+        }
+    });
+});
 
 chrome.runtime.sendMessage({type: MESSAGE_TYPE_HAZMAT, message: ASIN, domain: DOMAIN}, function (response) {
     console.log(response);
     const hazmat = response.search('Hazmat') !== -1;
-    jQuery('.amazon-extension').find('table > tbody').prepend('<tr><td>Hazmat</td><td>' + (hazmat ? 'true' : 'false') + '</td></tr>');
-});
-
-chrome.runtime.sendMessage({type: MESSAGE_TYPE_UNGATE, message: ASIN, domain: DOMAIN}, function (response) {
-    let ungated = false;
-
-    if (jQuery(response).find('#myq-application-form-email-input').val()) {
-        ungated = false;
-    } else if (jQuery(response).find("[name='appAction']").val()) {
-        ungated = false;
-        alert("Please Login To Seller Center");
-    } else if (jQuery(response).find("#application_dashboard_table").html()) {
-        ungated = false;
-    } else if (jQuery(response).find(".su-video-page-container").html()) {
-        ungated = false;
-    } else if (jQuery(response).find("#myq-performance-check-heading-failure").html()) {
-        ungated = false;
-    } else {
-        ungated = true;
-    }
-
-    jQuery('.amazon-extension').find('table > tbody').prepend('<tr><td>Ungated</td><td>' + (ungated ? 'true' : 'false') + '</td></tr>');
+    jQuery('.amazon-detail-table').find('tbody').prepend('<tr><td>Hazmat</td><td>' + (hazmat ? '<span class="text-success">Yes</span>' : '<span class="text-danger">No</span>') + '</td></tr>');
 });
 
 chrome.runtime.sendMessage({type: MESSAGE_TYPE_RESTRICTIONS, message: ASIN, domain: DOMAIN}, function (response) {
@@ -94,7 +136,7 @@ chrome.runtime.sendMessage({type: MESSAGE_TYPE_RESTRICTIONS, message: ASIN, doma
             }
         }
     }
-    jQuery('.amazon-extension').find('table > tbody').prepend('<tr><td>Restricted</td><td>' + (restricted ? 'true' : 'false') + '</td></tr>');
+    jQuery('.amazon-detail-table').find('tbody').prepend('<tr><td>Restricted</td><td>' + (restricted ? '<span class="text-success">Yes</span>' : '<span class="text-danger">No</span>') + '</td></tr>');
 });
 
 console.log(ASIN[1]);

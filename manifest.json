@@ -19,13 +19,14 @@
         "styles/content.css"
       ],
       "js": [
+        "node_modules/@fortawesome/fontawesome-free/js/all.js",
         "node_modules/jquery/dist/jquery.min.js",
         "scripts/content.js"
       ],
       "matches": [
         "https://www.amazon.co.uk/*"
       ],
-      "run_at": "document_end"
+      "run_at": "document_idle"
     }
   ],
   "default_locale": "en",
