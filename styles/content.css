@@ -1,45 +1,9 @@
 .amazon-bar {
-    width: 0;
-    flex-shrink: 0;
     position: relative;
-    transition: width 0.2s ease;
-    border-left: 1px solid #000;
-}
-
-.amazon-bar-cropper {
-    overflow: hidden;
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
-
-.amazon-toggle-btn {
-    text-align: center;
-    z-index: 999;
-    /* padding: 23px; */
-    /* border: 1px solid; */
-    border-radius: 50%;
-    /* border-bottom-left-radius: 50%; */
-    width: 50px;
-    height: 50px;
-    padding: 14px 16px;
-    font-size: 20px;
-    box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.75);
-    background: #2500ef;
-    color: #fff;
-    position: absolute;
-    left: -59px;
-    top: 112px;
-}
-
-.amazon-toggle-btn.flip {
-    -webkit-transform: scaleX(-1);
-    transform: scaleX(-1);
-}
-
-.amazon-wrapper {
-    display: flex;
-    flex-direction: row;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    padding: 10px 14px !important;
+    border: 1px #ddd solid;
 }
 
 .close-btn {
@@ -50,51 +14,52 @@
     color: red;
 }
 
-.amazon-bar-absolute {
-    position: absolute;
-    left: 0;
-    top: 0;
-    padding: 15px;
-    width: 350px;
+.ungate-button {
+    display: block !important;
 }
 
-.ungate-button {
-    display: block;
-    width: 100%;
-    font-size: 25px;
-    background: #2500ef;
-    border: none;
-    color: #fff;
-    padding: 15px;
-    outline: none;
+.ungate-button .a-button-text {
+    padding: 0 10px !important;
 }
 
 .ungate-button:focus, .ungate-button:active {
     outline: none;
 }
 
+.amazon-ad-container {
+    height: 100px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 100px;
+    color: #fff;
+    background: #232f3f;
+    font-size: 17px;
+    font-weight: normal;
+}
+
 table.amazon-detail-table {
     border-collapse: collapse;
-    font-size: 25px;
+    font-size: 16px;
 }
 
 table.amazon-detail-table tr td {
-    border: 1px solid #000;
+    border: 1px #ddd solid;
     padding: 10px;
 }
 
 .text-success {
-    color: green;
+    color: #007600;
 }
 
 .text-danger {
-    color: red;
+    color: #d00;
 }
 
 .bg-danger {
-    background: red;
+    color: #d00;
 }
 
 .bg-success {
-    background: green;
+    color: #007600;
 }

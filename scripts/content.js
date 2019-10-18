@@ -12,21 +12,19 @@ const DOMAIN = 'co.uk';
 
 const HTML = `
 <div class="amazon-bar">
-    <div class="amazon-toggle-btn"><i class="fa fa-chevron-left"></i></div>
-    <div class="amazon-bar-cropper">
-        <div class="amazon-bar-absolute">
-            <h1 class="amazon-product-title"></h1>
-            <table class="amazon-detail-table"><tbody></tbody></table>
-            <button class="ungate-button">Ungate</button>
-        </div>
-    </div>
+    <h1 class="amazon-product-title"></h1>
+    <table class="amazon-detail-table"><tbody></tbody></table>
+    <div class="amazon-ad-container">Your ad here</div>
+    <span class="a-button a-spacing-small a-button-primary a-button-icon ungate-button">
+        <span class="a-button-inner">
+            <span class="a-button-text" aria-hidden="true">Ungate product</span>
+        </span>
+    </span>
 </div>
 `;
-// Create a wrapper
-jQuery('#a-page').wrap('<div class="amazon-wrapper"></div>');
 
 // Append bar
-jQuery('.amazon-wrapper').append(HTML);
+jQuery('#desktop_buybox').prepend(HTML);
 
 // 1 Step - Add title
 jQuery('.amazon-bar-absolute').prepend('<h1>' + jQuery('#productTitle').text() + '</h1>');
@@ -45,7 +43,7 @@ jQuery('.amazon-toggle-btn').on('click', () => {
 
 
 jQuery('.ungate-button').on('click', () => {
-    jQuery('.ungate-button').text('Please, wait...');
+    jQuery('.ungate-button .a-button-text').html('Please, wait...');
 
     chrome.runtime.sendMessage({type: MESSAGE_TYPE_UNGATE, message: ASIN, domain: DOMAIN}, function (response) {
         let ungated = false;
@@ -65,14 +63,7 @@ jQuery('.ungate-button').on('click', () => {
             ungated = true;
         }
 
-        jQuery('.ungate-button').text(ungated ? 'Success' : 'Failed to ungate');
-        if (ungated) {
-            jQuery('.ungate-button').removeClass('bg-danger');
-            jQuery('.ungate-button').addClass('bg-success');
-        } else {
-            jQuery('.ungate-button').removeClass('bg-success');
-            jQuery('.ungate-button').addClass('bg-danger');
-        }
+        jQuery('.ungate-button .a-button-text').text(ungated ? 'Success' : 'Failed to ungate');
     });
 });
 
