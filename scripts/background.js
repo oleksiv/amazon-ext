@@ -9,9 +9,12 @@ class AmazonService {
         const URL = 'https://sellercentral.amazon.' + domain + '/hz/m/sourcing/inbound/eligibility?ref_=ag_src-elig_cont_src-mdp&asin=' + asin;
         jQuery.ajax(URL, {
             method: 'GET',
-        }).done((response) => {
-            console.log('ajax successfull');
-            callback(response);
+            success: (response) => {
+                callback(response);
+            },
+            error: (error) => {
+                callback(false);
+            }
         })
     }
 
@@ -19,9 +22,12 @@ class AmazonService {
         const URL = "https://sellercentral.amazon." + domain + "/hz/approvalrequest?asin=" + asin;
         jQuery.ajax(URL, {
             method: 'GET',
-        }).done((response) => {
-            console.log('ajax successfull');
-            callback(response);
+            success: (response) => {
+                callback(response);
+            },
+            error: (error) => {
+                callback(false);
+            }
         });
     }
 
@@ -29,9 +35,12 @@ class AmazonService {
         const URL = 'https://sellercentral.amazon.' + domain + '/productsearch/search?query=' + asin + '&page=1';
         jQuery.ajax(URL, {
             method: 'GET',
-        }).done((response) => {
-            console.log('ajax successfull');
-            callback(response);
+            success: (response) => {
+                callback(response);
+            },
+            error: (error) => {
+                callback(false);
+            }
         });
     }
 }

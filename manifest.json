@@ -43,7 +43,11 @@
   "permissions": [
     "activeTab",
     "cookies",
+    "storage",
     "https://*.amazon.co.uk/*"
+  ],
+  "web_accessible_resources": [
+    "options.html"
   ],
   "update_url": "https://clients2.google.com/service/update2/crx",
   "version": "1.0.1"
