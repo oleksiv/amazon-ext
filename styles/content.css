@@ -38,6 +38,11 @@
     font-weight: normal;
 }
 
+.amazon-product-title {
+    font-size: 17px;
+    margin-bottom: 12px;
+}
+
 table.amazon-detail-table {
     border-collapse: collapse;
     font-size: 16px;
