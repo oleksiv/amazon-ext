@@ -10,21 +10,35 @@
       "48": "ico/logo_48x48.png",
       "128": "ico/logo_128x128.png"
     },
-    "default_title": "Amazon Extension"
+    "default_title": "Restricted or Hazmat"
   },
   "content_scripts": [
     {
       "all_frames": false,
       "css": [
+        "libs/bootstrap/css/bootstrap.min.css",
         "styles/content.css"
       ],
       "js": [
-        "node_modules/@fortawesome/fontawesome-free/js/all.js",
-        "node_modules/jquery/dist/jquery.min.js",
+        "libs/vue/vue.min.js",
+        "libs/fontawesome/js/all.js",
+        "libs/jquery/jquery.min.js",
         "scripts/content.js"
       ],
       "matches": [
-        "https://www.amazon.co.uk/*"
+        "*://www.amazon.com/*",
+        "*://www.amazon.fr/*",
+        "*://www.amazon.de/*",
+        "*://www.amazon.co.uk/*",
+        "*://www.amazon.es/*",
+        "*://www.amazon.it/*",
+        "*://www.amazon.ca/*",
+        "*://www.amazon.com.mx/*",
+        "*://www.amazon.com.br/*",
+        "*://www.amazon.co.jp/*",
+        "*://www.amazon.cn/*",
+        "*://www.amazon.in/*",
+        "*://www.amazon.com.au/*"
       ],
       "run_at": "document_idle"
     }

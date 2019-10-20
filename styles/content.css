@@ -1,17 +1,13 @@
 .amazon-bar {
-    position: relative;
-    border-radius: 4px;
-    margin-bottom: 15px;
-    padding: 10px 14px !important;
-    border: 1px #ddd solid;
+    /*position: relative;*/
+    /*border-radius: 4px;*/
+    /*margin-bottom: 15px;*/
+    /*padding: 10px 14px !important;*/
+    /*border: 1px #ddd solid;*/
 }
 
 .close-btn {
     cursor: pointer;
-    position: absolute;
-    right: 16px;
-    top: 11px;
-    color: red;
 }
 
 .ungate-button {
@@ -43,28 +39,57 @@
     margin-bottom: 12px;
 }
 
-table.amazon-detail-table {
-    border-collapse: collapse;
-    font-size: 16px;
+.table td, .table th {
+    padding: 0.75rem !important;
+    border-top: 1px solid rgb(222, 226, 230) !important;
 }
 
-table.amazon-detail-table tr td {
-    border: 1px #ddd solid;
-    padding: 10px;
+.btn-cyan {
+    color: #fff;
+    background-color: #46b8da;
+    border-color: #46b8da;
 }
 
-.text-success {
-    color: #007600;
+.btn-cyan:hover {
+    color: #fff;
+    background-color: #46b8da;
+    border-color: #46b8da;
 }
 
-.text-danger {
-    color: #d00;
+.btn-cyan:focus, .btn-cyan.focus {
+    box-shadow: 0 0 0 0.2rem rgba(70, 184, 218, 0.5);
 }
 
-.bg-danger {
-    color: #d00;
+.btn-cyan.disabled, .btn-cyan:disabled {
+    color: #fff;
+    background-color: #46b8da;
+    border-color: #46b8da;
 }
 
-.bg-success {
-    color: #007600;
+.btn-cyan:not(:disabled):not(.disabled):active, .btn-cyan:not(:disabled):not(.disabled).active,
+.show > .btn-cyan.dropdown-toggle {
+    color: #fff;
+    background-color: #46b8da;
+    border-color: #46b8da;
+}
+
+.btn-cyan:not(:disabled):not(.disabled):active:focus, .btn-cyan:not(:disabled):not(.disabled).active:focus,
+.show > .btn-cyan.dropdown-toggle:focus {
+    box-shadow: 0 0 0 0.2rem rgba(70, 184, 218, 0.5);
+}
+
+.alert {
+    font-weight: bold;
+}
+
+.alert.alert-danger {
+    color: #fff;
+    background: rgb(220, 53, 69) !important;
+    border-color: rgb(183, 52, 66) !important;
+}
+
+.alert.alert-success {
+    color: #fff;
+    background: rgb(40, 167, 69) !important;
+    border-color: rgb(38, 127, 63) !important;
 }

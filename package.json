@@ -12,6 +12,7 @@
     "@fortawesome/fontawesome-free": "^5.11.2",
     "bootstrap": "^4.3.1",
     "jquery": "^3.4.1",
-    "rxjs": "^6.5.3"
+    "rxjs": "^6.5.3",
+    "vue": "^2.6.10"
   }
 }

@@ -1,154 +1,148 @@
 'use strict';
 
-const MESSAGE_TYPE_HAZMAT = 1;
-const MESSAGE_TYPE_UNGATE = 2;
-const MESSAGE_TYPE_RESTRICTIONS = 3;
-const RESTRICTED_MESSAGES = ['not approved'];
-const ASIN = window.location.href.match(/(?:[/dp/]|$)([A-Z0-9]{10})/i)[1];
-const DOMAIN = getDomain(window.location.href);
-const WRAPPER = `<div id="amazonWrapper"></div>`;
-const HTML = `
-        <div class="amazon-bar">
-            <h1 class="amazon-product-title"></h1>
-            <table class="amazon-detail-table"><tbody></tbody></table>
-            <div class="amazon-ad-container">Your ad here</div>
-            <span class="a-button a-spacing-small a-button-primary a-button-icon ungate-button">
-                <span class="a-button-inner">
-                    <span class="a-button-text" aria-hidden="true">Ungate product</span>
-                </span>
-            </span>
+const MESSAGE_TYPE_HAZMAT = '1';
+const MESSAGE_TYPE_UNGATE = '2';
+const MESSAGE_TYPE_RESTRICTIONS = '3';
+
+const URL_MATCHES = window.location.href.match(/https:\/\/www.amazon.(com|fr|de|co.uk|es|it|ca|com.mx|com.br|co.jp|cn|in|com.au)\/([\w%-]+\/)?(dp|gp\/offer-listing|gp(\/product)?)\/(\w+\/)?(\w{10})/i);
+
+
+if (URL_MATCHES) {
+    console.log('----------- Extension box should appear on this page ------------');
+
+    const ASIN = URL_MATCHES[6];
+    const DOMAIN = URL_MATCHES[1];
+
+    // Append wrapper
+    jQuery('#rightCol').prepend('<div id="app"></div>');
+
+    new Vue({
+        el: '#app',
+        template: `
+        <div class="card amazon-bar mb-3" v-if="extensionEnabled">
+            <div class="card-header d-inline-block text-justify"><div class="form-row"><div class="col-10">Restricted or Hazmat</div><div class="col-2 text-right close-btn"><i class="fa fa-times"></i></div></div></div>
+            <div class="card-body">
+                <div v-if="!userNotLoggedIn && acceptedAgreement">
+                    <table class="table table-bordered amazon-detail-table">
+                        <tbody>
+                            <tr>
+                                <td>Restricted</td>
+                                <td v-bind:class="{ 'bg-danger': restricted === true, 'bg-success': restricted === false }">
+                                    <b v-show="restricted === null"><i class="fa fa-spinner fa-spin"></i></b>
+                                    <b v-show="restricted === true" class="text-white">Yes</b>
+                                    <b v-show="restricted === false" class="text-white">No</b>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Hazmat</td>
+                                <td v-bind:class="{ 'bg-danger': hazmat === true, 'bg-success': hazmat === false }">
+                                    <b v-show="hazmat === null"><i class="fa fa-spinner fa-spin"></i></b>
+                                    <b v-show="hazmat === true" class="text-white">Yes</b>
+                                    <b v-show="hazmat === false" class="text-white">No</b>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button class="btn btn-block btn-cyan mb-3" v-show="ungated === null" v-if="restricted" v-on:click="tryToUnGate()">
+                        <b v-show="ungated === null && !ungatedLoading">Try to Ungate?</b>
+                        <b v-show="ungated === null && ungatedLoading">Loading <i class="ml-2 fa fa-spinner fa-spin"></i></b>
+                    </button>
+                    <div class="alert alert-danger mb-3 text-center" v-if="ungated === false">Failed to Ungate</div>
+                    <div class="alert alert-danger mb-3 text-center" v-if="ungated === true">Ungate Success</div>
+                </div>
+                <!--User has to agree with the term asd conditions-->
+                <div v-if="!acceptedAgreement">
+                    <div class="alert alert-danger" role="alert">
+                      Extension is disabled. You have to agree with the Terms and Conditions before you can start using it.
+                    </div>
+                    <span class="a-button a-spacing-small a-button-primary a-button-icon ungate-button" id="goToOptions">
+                        <span class="a-button-inner">
+                            <span class="a-button-text" aria-hidden="true" v-on:click="goToOptionsPage()">Go to options</span>
+                        </span>
+                    </span>
+                </div>
+                <!--User is not logged in -->
+                <div v-if="userNotLoggedIn">
+                    <div class="alert alert-danger" role="alert">
+                      Please login to Seller Central
+                    </div>
+                    <button class="btn btn-cyan btn-block" v-on:click="goToLoginPage()">Go to login page</button>
+                   
+                </div>
+            </div>
+            <div class="card-footer"><a href="https://selleramp.com" target="_blank">From Seller Amp</a></div>
         </div>
-`;
-const EXTENSION_DISABLED = `
-    <div class="amazon-bar">
-        <h1 class="amazon-product-title text-danger">Extension is disabled. You have to agree with the Terms and Conditions before you can start using it.</h1>
-        <span class="a-button a-spacing-small a-button-primary a-button-icon ungate-button" id="goToOptions">
-            <span class="a-button-inner">
-                <span class="a-button-text" aria-hidden="true">Go to options</span>
-            </span>
-        </span>
-    </div>
-`;
-const EXTENSION_LOGIN = `
-    <div class="amazon-bar">
-        <h1 class="amazon-product-title text-danger">Please login to Seller Central</h1>
-        <span class="a-button a-spacing-small a-button-primary a-button-icon ungate-button" id="goToLogin">
-            <span class="a-button-inner">
-                <span class="a-button-text" aria-hidden="true">Go to login page</span>
-            </span>
-        </span>
-    </div>
-`;
+    `,
+        data: {
+            restricted: null,
+            hazmat: null,
+            ungated: null,
+            ungatedLoading: false,
 
-// Append wrapper
-jQuery('#rightCol').prepend(WRAPPER);
+            userNotLoggedIn: false,
 
-chrome.storage.sync.get({
-    enableExtension: false,
-}, function (items) {
-    if (items.enableExtension) {
-        jQuery('#amazonWrapper').prepend(HTML);
+            extensionEnabled: false,
+            acceptedAgreement: false
+        },
+        created: function () {
+            console.log('created');
 
-        // Add title
-        jQuery('.amazon-product-title').text(jQuery('#productTitle').text());
-
-        // Listen events
-        jQuery('.ungate-button').on('click', () => {
-            jQuery('.ungate-button .a-button-text').html('Please, wait...');
-
-            chrome.runtime.sendMessage({type: MESSAGE_TYPE_UNGATE, message: ASIN, domain: DOMAIN}, function (response) {
-                if (response) {
-                    let ungated = false;
-
-                    if (jQuery(response).find('#myq-application-form-email-input').val()) {
-                        ungated = false;
-                    } else if (jQuery(response).find("[name='appAction']").val()) {
-                        ungated = false;
-                    } else if (jQuery(response).find("#application_dashboard_table").html()) {
-                        ungated = false;
-                    } else if (jQuery(response).find(".su-video-page-container").html()) {
-                        ungated = false;
-                    } else ungated = !jQuery(response).find("#myq-performance-check-heading-failure").html();
-
-                    jQuery('.ungate-button .a-button-text').text(ungated ? 'Success' : 'Failed to ungate');
-                } else {
-                    userIsNotLoggedIn();
-                }
+            // Check whether the extension is enabled
+            chrome.storage.sync.get({extensionEnabled: false}, (items) => {
+                this.extensionEnabled = items.extensionEnabled;
             });
-        });
 
-        // Send MESSAGE_TYPE_HAZMAT message on init
-        chrome.runtime.sendMessage({type: MESSAGE_TYPE_HAZMAT, message: ASIN, domain: DOMAIN}, function (response) {
-            if (response) {
-                const hazmat = response.search('Hazmat') !== -1;
-                jQuery('.amazon-detail-table').find('tbody').prepend('<tr><td>Hazmat</td><td>' + (hazmat ? '<span class="text-danger">Yes</span>' : '<span class="text-success">No</span>') + '</td></tr>');
-            } else {
-                userIsNotLoggedIn();
+            // Check whether the extension is enabled
+            chrome.storage.sync.get({acceptedAgreement: false}, (items) => {
+                this.acceptedAgreement = items.acceptedAgreement;
+            });
+        },
+        computed: {
+            enabled: function () {
+                // `.join()` because we don't care about the return value.
+                return [this.extensionEnabled, this.acceptedAgreement].join()
             }
-        });
+        },
+        watch: {
+            enabled: function () {
+                if (this.extensionEnabled && this.acceptedAgreement) {
+                    // Hazmat
+                    chrome.runtime.sendMessage({type: MESSAGE_TYPE_HAZMAT, message: ASIN, domain: DOMAIN}, (result) => {
+                        this.hazmat = result;
+                        this.userNotLoggedIn = result === null;
+                    });
 
-        // Send MESSAGE_TYPE_RESTRICTIONS message on init
-        chrome.runtime.sendMessage({
-            type: MESSAGE_TYPE_RESTRICTIONS,
-            message: ASIN,
-            domain: DOMAIN
-        }, function (response) {
-            if (response) {
-                let restricted = false;
-                if (typeof response === 'object') {
-                    const JSON = response;
-                    if (JSON.products.length) {
-                        if (JSON.products[0].hasOwnProperty('salesRank')) {
-                            // Global Rank
-                        }
-                        if (JSON.products[0].hasOwnProperty('restrictedForAllConditions')) {
-                            if (JSON.products[0].restrictedForAllConditions) {
-                                restricted = true;
-                            }
-                        }
-                        if (JSON.products[0].hasOwnProperty('qualificationMessages')) {
-                            if (JSON.products[0].qualificationMessages.some(message => {
-                                return RESTRICTED_MESSAGES.some(restricted_message =>
-                                    message.qualificationMessage.indexOf(restricted_message) !== -1)
-                            })) {
-                                restricted = true;
-                            }
-                        }
-                    }
+                    // Restrictions
+                    chrome.runtime.sendMessage({
+                        type: MESSAGE_TYPE_RESTRICTIONS,
+                        message: ASIN,
+                        domain: DOMAIN
+                    }, (result) => {
+                        this.restricted = result;
+                        this.userNotLoggedIn = result === null;
+                    });
                 }
-                // Append result to detail table
-                jQuery('.amazon-detail-table').find('tbody').prepend('<tr><td>Restricted</td><td>' + (restricted ? '<span class="text-danger">Yes</span>' : '<span class="text-success">No</span>') + '</td></tr>');
-            } else {
-                userIsNotLoggedIn();
             }
-        });
-    } else {
-        jQuery('#amazonWrapper').html(EXTENSION_DISABLED);
-        jQuery('#goToOptions').on('click', () => {
-            window.open(chrome.runtime.getURL('options.html'), '_blank');
-        });
-    }
-});
+        },
+        methods: {
+            tryToUnGate: function () {
+                this.ungatedLoading = true;
+                this.ungated = null;
 
-
-function userIsNotLoggedIn() {
-    jQuery('#amazonWrapper').html(EXTENSION_LOGIN);
-    jQuery('#goToLogin').on('click', () => {
-        window.open('https://sellercentral.amazon.co.uk/', '_blank');
+                chrome.runtime.sendMessage({type: MESSAGE_TYPE_UNGATE, message: ASIN, domain: DOMAIN}, (response) => {
+                    this.ungated = response;
+                    this.userNotLoggedIn = response === null;
+                    this.ungatedLoading = false;
+                });
+            },
+            goToOptionsPage: function () {
+                window.open(chrome.runtime.getURL('options.html'), '_blank');
+            },
+            goToLoginPage: function () {
+                window.open('https://sellercentral.amazon.co.uk/', '_blank');
+            }
+        }
     });
-}
-
-function getDomain(url) {
-    if (!url) {
-        return null
-    }
-
-    const re = /.+amazon\.([a-z.]{2,6})\/.*/;
-    const match = url.match(re);
-    if (match == null) {
-        return null;
-    }
-    return match.length ? match[1] : null;
 }
 
 
