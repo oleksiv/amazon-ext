@@ -6,7 +6,7 @@ const {map, switchMap, filter, catchError, tap} = rxjs.operators;
 const MESSAGE_TYPE_HAZMAT = '1';
 const MESSAGE_TYPE_UNGATE = '2';
 const MESSAGE_TYPE_RESTRICTIONS = '3';
-const RESTRICTED_MESSAGES = ['not approved', 'You cannot list'];
+const MESSAGE_TYPE_DISABLE_EXTENSION = '4';
 
 class AmazonService {
     isHazMat(domain, asin, callback) {
@@ -45,6 +45,7 @@ class AmazonService {
                     jQuery(result).find("[name='appAction']").val() ||
                     jQuery(result).find("#application_dashboard_table").html() ||
                     jQuery(result).find(".su-video-page-container").html() ||
+                    jQuery(result).find(".saw-module-header").html() ||
                     jQuery(result).find("#myq-performance-check-heading-failure").html());
             }),
             switchMap(ungated => combineLatest(of(ungated), http.post('https://jsonplaceholder.typicode.com/posts', {
@@ -69,25 +70,56 @@ class AmazonService {
             }),
             filter(result => result !== null),
             map(result => {
-                if (typeof result === 'object') {
-                    const JSON = result;
-                    if (JSON.products.length) {
-                        if (JSON.products[0].hasOwnProperty('salesRank')) {
-                            // Global Rank
+                /**
+                 * @param result.products
+                 */
+                if (!Array.isArray(result.products)) {
+                    if (result.indexOf("cross-regional accounts") !== -1) {
+                        console.log("Enable single sign-on to access your cross-regional accounts with one set of credentials");
+                    }
+                    return null;
+                }
+
+
+                if (result.products.length) {
+
+                    /**
+                     * @param product.restrictedForAnyCondition
+                     * @param product.restrictedForAllConditions
+                     * @param product.pathToSellUrl
+                     * @param product.qualificationMessages
+                     */
+                    const product = result.products[0];
+
+                    try {
+
+                        let needApproval = false;
+
+                        if (!needApproval) {
+                            needApproval = product.restrictedForAnyCondition && product.restrictedForAllConditions;
                         }
-                        if (JSON.products[0].hasOwnProperty('restrictedForAllConditions')) {
-                            if (JSON.products[0].restrictedForAllConditions) {
-                                return true;
-                            }
+
+                        if (!needApproval) {
+                            const needApprovalUrl = product.pathToSellUrl && product.pathToSellUrl.indexOf("approvalrequest") > -1;
+                            needApproval = product.qualificationMessages.filter((item) =>
+                                (
+                                    /**
+                                     * @param item.qualificationMessage
+                                     * @param item.conditionList
+                                     */
+                                    item.qualificationMessage.indexOf("You need approval") ||
+                                    item.qualificationMessage.indexOf("You are not approved")
+                                ) &&
+                                (
+                                    !item.conditionList ||
+                                    item.conditionList.split(',').filter(y => y.indexOf("New") !== -1).length > 0
+                                )
+                            ).length > 0 && needApprovalUrl;
                         }
-                        if (JSON.products[0].hasOwnProperty('qualificationMessages')) {
-                            if (JSON.products[0].qualificationMessages.some(message => {
-                                return RESTRICTED_MESSAGES.some(restricted_message =>
-                                    message.qualificationMessage.indexOf(restricted_message) !== -1)
-                            })) {
-                                return true;
-                            }
-                        }
+
+                        return needApproval;
+                    } catch (error) {
+                        console.log(error);
                     }
                 }
 
@@ -139,7 +171,45 @@ class HttpService {
     }
 }
 
+class ExtensionService {
+    initializeStatus() {
+        // Set status for toolbar icon. Define whether the extension is enabled by user.
+        chrome.storage.sync.get({
+            extensionEnabled: true,
+        }, (items) => chrome.browserAction.setIcon({path: items.extensionEnabled ? 'ico/logo_32x32.png' : 'ico/logo_32x32_gray.png'}));
+    }
+
+    disable() {
+        chrome.storage.sync.set({
+            extensionEnabled: false,
+        });
+        chrome.browserAction.setIcon({path: 'ico/logo_32x32_gray.png'});
+    }
+
+    enable() {
+        chrome.storage.sync.set({
+            extensionEnabled: true,
+        });
+        chrome.browserAction.setIcon({path: 'ico/logo_32x32.png'});
+    }
+
+    toggle() {
+        chrome.storage.sync.get({
+            extensionEnabled: false,
+        }, (items) => {
+            items.extensionEnabled ? this.disable() : this.enable();
+            // chrome.storage.sync.set({
+            //     extensionEnabled: !items.extensionEnabled,
+            // });
+            // chrome.browserAction.setIcon({path: !items.extensionEnabled ? 'ico/logo_32x32.png' : 'ico/logo_32x32_gray.png'});
+        });
+    }
+}
+
 const amazon = new AmazonService();
+const extension = new ExtensionService();
+
+extension.initializeStatus();
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Send callback regarding hazmat
@@ -154,26 +224,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === MESSAGE_TYPE_RESTRICTIONS) {
         amazon.checkRestrictions(message.domain, message.message, sendResponse);
     }
+    // Send callback regarding restrictions
+    if (message.type === MESSAGE_TYPE_DISABLE_EXTENSION) {
+        extension.disable();
+        sendResponse(false);
+    }
 
     return true;
 });
 
-// Set status for toolbar icon. Define whether the extension is enabled by user.
-chrome.storage.sync.get({
-    extensionEnabled: false,
-}, (items) => chrome.browserAction.setIcon({path: items.extensionEnabled ? 'ico/logo_32x32.png' : 'ico/logo_32x32_gray.png'}));
 
 // Listen on toolbar icon click
 chrome.browserAction.onClicked.addListener(function (tab) {
-    chrome.storage.sync.get({
-        extensionEnabled: false,
-    }, (items) => {
-        chrome.storage.sync.set({
-            extensionEnabled: !items.extensionEnabled,
-        });
-        chrome.browserAction.setIcon({path: !items.extensionEnabled ? 'ico/logo_32x32.png' : 'ico/logo_32x32_gray.png'});
-    });
+    extension.toggle();
 });
+
 
 
 

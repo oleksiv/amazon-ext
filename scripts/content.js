@@ -3,24 +3,25 @@
 const MESSAGE_TYPE_HAZMAT = '1';
 const MESSAGE_TYPE_UNGATE = '2';
 const MESSAGE_TYPE_RESTRICTIONS = '3';
+const MESSAGE_TYPE_DISABLE_EXTENSION = '4';
 
-const URL_MATCHES = window.location.href.match(/https:\/\/www.amazon.(com|fr|de|co.uk|es|it|ca|com.mx|com.br|co.jp|cn|in|com.au)\/([\w%-]+\/)?(dp|gp\/offer-listing|gp(\/product)?)\/(\w+\/)?(\w{10})/i);
-
-
-if (URL_MATCHES) {
+const run = function (matches) {
     console.log('----------- Extension box should appear on this page ------------');
 
-    const ASIN = URL_MATCHES[6];
-    const DOMAIN = URL_MATCHES[1];
+    const ASIN = matches[6];
+    const DOMAIN = matches[1];
 
     // Append wrapper
     jQuery('#rightCol').prepend('<div id="app"></div>');
 
+    /**
+     * @class Vue
+     */
     new Vue({
         el: '#app',
         template: `
-        <div class="card amazon-bar mb-3">
-            <div class="card-header d-inline-block text-justify"><div class="form-row"><div class="col-10">Restricted or Hazmat</div><div class="col-2 text-right close-btn"><i class="fa fa-times"></i></div></div></div>
+        <div class="card amazon-bar mb-3" v-if="extensionEnabled !== false">
+            <div class="card-header d-inline-block text-justify"><div class="form-row"><div class="col-10">Restricted or Hazmat</div><div class="col-2 text-right close-btn" v-on:click="disableExtension()"><i class="fa fa-times"></i></div></div></div>
             <div class="card-body">
                 <div v-if="!userNotLoggedIn && acceptedAgreement && extensionEnabled">
                     <table class="table table-bordered amazon-detail-table">
@@ -50,30 +51,36 @@ if (URL_MATCHES) {
                     <div class="alert alert-danger mb-3 text-center" v-if="ungated === false">Failed to Ungate</div>
                     <div class="alert alert-success mb-3 text-center" v-if="ungated === true">Ungate Success</div>
                 </div>
-                <!--User has to agree with the term asd conditions-->
-                <div v-if="!acceptedAgreement">
-                    <div class="alert alert-danger" role="alert">
-                      Extension is disabled. You have to agree with the Terms and Conditions before you can start using it.
-                    </div>
-                    <span class="a-button a-spacing-small a-button-primary a-button-icon ungate-button" id="goToOptions">
-                        <span class="a-button-inner">
-                            <span class="a-button-text" aria-hidden="true" v-on:click="goToOptionsPage()">Go to options</span>
-                        </span>
-                    </span>
-                </div>
-                <!--User is not logged in -->
-                <div v-if="userNotLoggedIn">
-                    <div class="alert alert-danger" role="alert">
-                      Please login to Seller Central
-                    </div>
-                    <button class="btn btn-cyan btn-block" v-on:click="goToLoginPage()">Go to login page</button>
-                  
-                </div>
+                
                 <!-- Extension is not enabled -->
                 <div v-if="!extensionEnabled">
                     <div class="alert alert-danger" role="alert">
                         You should enable it
                     </div>                  
+                </div>
+                
+                <!--User has to agree with the term asd conditions-->
+                <div v-if="!acceptedAgreement">
+                    <div class="alert alert-info" role="alert">
+                      You have to agree with the Terms and Conditions before you can start using this extension.
+                    </div>
+                </div>
+               
+                <!--User is not logged in -->
+                <div v-if="userNotLoggedIn">
+                    <div class="alert alert-danger" role="alert">
+                      Please login to Seller Central
+                    </div>
+                </div>
+                
+                <!-- Go to login page-->
+                <div v-if="userNotLoggedIn">
+                    <button class="btn btn-block btn-cyan mb-3" v-on:click="goToLoginPage()">Go to login page</button>
+                </div>
+                
+                <!-- Go to options page-->
+                <div v-if="!acceptedAgreement">
+                    <button class="btn btn-block btn-cyan mb-3" v-on:click="goToOptionsPage()">Terms and Conditions</button>
                 </div>
             </div>
             <div class="card-footer"><a href="https://selleramp.com" target="_blank">From Seller Amp</a></div>
@@ -91,10 +98,8 @@ if (URL_MATCHES) {
             acceptedAgreement: false
         },
         created: function () {
-            console.log('created');
-
             // Check whether the extension is enabled
-            chrome.storage.sync.get({extensionEnabled: false}, (items) => {
+            chrome.storage.sync.get({extensionEnabled: true}, (items) => {
                 this.extensionEnabled = items.extensionEnabled;
             });
 
@@ -114,7 +119,6 @@ if (URL_MATCHES) {
                 if (this.extensionEnabled && this.acceptedAgreement) {
                     // Hazmat
                     chrome.runtime.sendMessage({type: MESSAGE_TYPE_HAZMAT, message: ASIN, domain: DOMAIN}, (result) => {
-                        console.log('Hazmat ' + result);
                         this.hazmat = result;
                         this.userNotLoggedIn = result === null;
                     });
@@ -133,13 +137,19 @@ if (URL_MATCHES) {
             }
         },
         methods: {
+            disableExtension: function () {
+                chrome.runtime.sendMessage({type: MESSAGE_TYPE_DISABLE_EXTENSION}, (result) => {
+                    this.extensionEnabled = result;
+                });
+            },
             tryToUnGate: function () {
                 this.ungatedLoading = true;
                 this.ungated = null;
 
-                chrome.runtime.sendMessage({type: MESSAGE_TYPE_UNGATE, message: ASIN, domain: DOMAIN}, (response) => {
-                    this.ungated = response;
-                    this.userNotLoggedIn = response === null;
+                chrome.runtime.sendMessage({type: MESSAGE_TYPE_UNGATE, message: ASIN, domain: DOMAIN}, (ungated) => {
+                    this.ungated = ungated;
+                    this.restricted = !ungated;
+                    this.userNotLoggedIn = ungated === null;
                     this.ungatedLoading = false;
                 });
             },
@@ -151,8 +161,13 @@ if (URL_MATCHES) {
             }
         }
     });
-}
+};
 
+const URL_MATCHES = window.location.href.match(/https:\/\/www.amazon.(com|fr|de|co.uk|es|it|ca|com.mx|com.br|co.jp|cn|in|com.au)\/([\w%-]+\/)?(dp|gp\/offer-listing|gp(\/product)?)\/(\w+\/)?(\w{10})/i);
+
+if (URL_MATCHES) {
+    run(URL_MATCHES);
+}
 
 
 
