@@ -19,15 +19,15 @@ if (URL_MATCHES) {
     new Vue({
         el: '#app',
         template: `
-        <div class="card amazon-bar mb-3" v-if="extensionEnabled">
+        <div class="card amazon-bar mb-3">
             <div class="card-header d-inline-block text-justify"><div class="form-row"><div class="col-10">Restricted or Hazmat</div><div class="col-2 text-right close-btn"><i class="fa fa-times"></i></div></div></div>
             <div class="card-body">
-                <div v-if="!userNotLoggedIn && acceptedAgreement">
+                <div v-if="!userNotLoggedIn && acceptedAgreement && extensionEnabled">
                     <table class="table table-bordered amazon-detail-table">
                         <tbody>
                             <tr>
                                 <td>Restricted</td>
-                                <td v-bind:class="{ 'bg-danger': restricted === true, 'bg-success': restricted === false }">
+                                <td class="text-center" v-bind:class="{ 'bg-danger': restricted === true, 'bg-success': restricted === false }">
                                     <b v-show="restricted === null"><i class="fa fa-spinner fa-spin"></i></b>
                                     <b v-show="restricted === true" class="text-white">Yes</b>
                                     <b v-show="restricted === false" class="text-white">No</b>
@@ -35,7 +35,7 @@ if (URL_MATCHES) {
                             </tr>
                             <tr>
                                 <td>Hazmat</td>
-                                <td v-bind:class="{ 'bg-danger': hazmat === true, 'bg-success': hazmat === false }">
+                                <td class="text-center" v-bind:class="{ 'bg-danger': hazmat === true, 'bg-success': hazmat === false }">
                                     <b v-show="hazmat === null"><i class="fa fa-spinner fa-spin"></i></b>
                                     <b v-show="hazmat === true" class="text-white">Yes</b>
                                     <b v-show="hazmat === false" class="text-white">No</b>
@@ -48,7 +48,7 @@ if (URL_MATCHES) {
                         <b v-show="ungated === null && ungatedLoading">Loading <i class="ml-2 fa fa-spinner fa-spin"></i></b>
                     </button>
                     <div class="alert alert-danger mb-3 text-center" v-if="ungated === false">Failed to Ungate</div>
-                    <div class="alert alert-danger mb-3 text-center" v-if="ungated === true">Ungate Success</div>
+                    <div class="alert alert-success mb-3 text-center" v-if="ungated === true">Ungate Success</div>
                 </div>
                 <!--User has to agree with the term asd conditions-->
                 <div v-if="!acceptedAgreement">
@@ -67,7 +67,13 @@ if (URL_MATCHES) {
                       Please login to Seller Central
                     </div>
                     <button class="btn btn-cyan btn-block" v-on:click="goToLoginPage()">Go to login page</button>
-                   
+                  
+                </div>
+                <!-- Extension is not enabled -->
+                <div v-if="!extensionEnabled">
+                    <div class="alert alert-danger" role="alert">
+                        You should enable it
+                    </div>                  
                 </div>
             </div>
             <div class="card-footer"><a href="https://selleramp.com" target="_blank">From Seller Amp</a></div>
@@ -108,6 +114,7 @@ if (URL_MATCHES) {
                 if (this.extensionEnabled && this.acceptedAgreement) {
                     // Hazmat
                     chrome.runtime.sendMessage({type: MESSAGE_TYPE_HAZMAT, message: ASIN, domain: DOMAIN}, (result) => {
+                        console.log('Hazmat ' + result);
                         this.hazmat = result;
                         this.userNotLoggedIn = result === null;
                     });
@@ -118,6 +125,7 @@ if (URL_MATCHES) {
                         message: ASIN,
                         domain: DOMAIN
                     }, (result) => {
+                        console.log('Restricted ' + result);
                         this.restricted = result;
                         this.userNotLoggedIn = result === null;
                     });

@@ -1,18 +1,23 @@
 'use strict';
 
-const {Observable, combineLatest, of} = rxjs;
-const {map, switchMap, filter} = rxjs.operators;
+const {Observable, combineLatest, of, throwError} = rxjs;
+const {map, switchMap, filter, catchError, tap} = rxjs.operators;
 
 const MESSAGE_TYPE_HAZMAT = '1';
 const MESSAGE_TYPE_UNGATE = '2';
 const MESSAGE_TYPE_RESTRICTIONS = '3';
-const RESTRICTED_MESSAGES = ['not approved'];
+const RESTRICTED_MESSAGES = ['not approved', 'You cannot list'];
 
 class AmazonService {
     isHazMat(domain, asin, callback) {
         const URL = 'https://sellercentral.amazon.' + domain + '/hz/m/sourcing/inbound/eligibility?ref_=ag_src-elig_cont_src-mdp&asin=' + asin;
         const http = new HttpService();
         http.get(URL).pipe(
+            catchError(result => {
+                callback(null);
+                return of(null);
+            }),
+            filter(result => result !== null),
             map(result => result.search('Hazmat') !== -1),
             switchMap(result => combineLatest(of(result), http.post('https://jsonplaceholder.typicode.com/posts', {
                 asin: asin,
@@ -30,6 +35,11 @@ class AmazonService {
         const URL = "https://sellercentral.amazon." + domain + "/hz/approvalrequest?asin=" + asin;
         const http = new HttpService();
         http.get(URL).pipe(
+            catchError(result => {
+                callback(null);
+                return of(null);
+            }),
+            filter(result => result !== null),
             map(result => {
                 return !(jQuery(result).find('#myq-application-form-email-input').val() ||
                     jQuery(result).find("[name='appAction']").val() ||
@@ -53,12 +63,12 @@ class AmazonService {
         const URL = 'https://sellercentral.amazon.' + domain + '/productsearch/search?query=' + asin + '&page=1';
         const http = new HttpService();
         http.get(URL).pipe(
+            catchError(result => {
+                callback(null);
+                return of(null);
+            }),
+            filter(result => result !== null),
             map(result => {
-                // If user is logged out
-                if (jQuery('#ap_signin1a_pagelet, #merchant-picker-auth-status, #signInSubmit', result).length) {
-                    return null;
-                }
-
                 if (typeof result === 'object') {
                     const JSON = result;
                     if (JSON.products.length) {
@@ -98,29 +108,31 @@ class AmazonService {
 
 class HttpService {
     post(url, body) {
-        return Observable.create(function (observer) {
+        return new Observable(subscriber => {
             jQuery.ajax(url, {
                 method: 'POST',
                 data: body,
                 success: (response) => {
-                    observer.next(response);
+                    subscriber.next(response);
                 },
                 error: (error) => {
-                    observer.throw(error);
+                    console.log(' ------------- ERROR ----------------');
+                    subscriber.error(error);
                 }
             });
         });
     }
 
     get(url) {
-        return Observable.create(function (observer) {
+        return new Observable(subscriber => {
             jQuery.ajax(url, {
                 method: 'GET',
                 success: (response) => {
-                    observer.next(response);
+                    subscriber.next(response);
                 },
                 error: (error) => {
-                    observer.throw(error);
+                    console.log(' ------------- ERROR ----------------');
+                    subscriber.error(error);
                 }
             });
         });
