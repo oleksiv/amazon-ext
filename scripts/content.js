@@ -24,7 +24,7 @@ const run = function (matches) {
         <div class="card amazon-bar mb-3" v-if="extensionEnabled !== false">
             <div class="card-header d-inline-block text-justify"><div class="form-row"><div class="col-10">Restricted or Hazmat</div><div class="col-2 text-right close-btn" v-on:click="disableExtension()"><i class="fa fa-times"></i></div></div></div>
             <div class="card-body">
-                <div v-if="!userNotLoggedIn && acceptedAgreement && extensionEnabled">
+                <div class="mb-3" v-if="!userNotLoggedIn && acceptedAgreement && extensionEnabled">
                     <table class="table table-bordered amazon-detail-table">
                         <tbody>
                             <tr>
