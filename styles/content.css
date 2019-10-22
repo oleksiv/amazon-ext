@@ -93,3 +93,12 @@
     background: rgb(40, 167, 69) !important;
     border-color: rgb(38, 127, 63) !important;
 }
+
+.spinner {
+    font-size: 28px;
+    color: #ccc;
+}
+
+.card-body {
+    padding: 10px;
+}

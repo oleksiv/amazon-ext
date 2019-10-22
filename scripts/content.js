@@ -4,6 +4,7 @@ const MESSAGE_TYPE_HAZMAT = '1';
 const MESSAGE_TYPE_UNGATE = '2';
 const MESSAGE_TYPE_RESTRICTIONS = '3';
 const MESSAGE_TYPE_DISABLE_EXTENSION = '4';
+const MESSAGE_TYPE_ADVERT = '5';
 
 const run = function (matches) {
     console.log('----------- Extension box should appear on this page ------------');
@@ -29,7 +30,7 @@ const run = function (matches) {
                             <tr>
                                 <td>Restricted</td>
                                 <td class="text-center" v-bind:class="{ 'bg-danger': restricted === true, 'bg-success': restricted === false }">
-                                    <b v-show="restricted === null"><i class="fa fa-spinner fa-spin"></i></b>
+                                    <b class="spinner" v-show="restricted === null"><i class="fa fa-spinner fa-spin"></i></b>
                                     <b v-show="restricted === true" class="text-white">Yes</b>
                                     <b v-show="restricted === false" class="text-white">No</b>
                                 </td>
@@ -37,7 +38,7 @@ const run = function (matches) {
                             <tr>
                                 <td>Hazmat</td>
                                 <td class="text-center" v-bind:class="{ 'bg-danger': hazmat === true, 'bg-success': hazmat === false }">
-                                    <b v-show="hazmat === null"><i class="fa fa-spinner fa-spin"></i></b>
+                                    <b class="spinner" v-show="hazmat === null"><i class="fa fa-spinner fa-spin"></i></b>
                                     <b v-show="hazmat === true" class="text-white">Yes</b>
                                     <b v-show="hazmat === false" class="text-white">No</b>
                                 </td>
@@ -82,6 +83,8 @@ const run = function (matches) {
                 <div v-if="!acceptedAgreement">
                     <button class="btn btn-block btn-cyan mb-3" v-on:click="goToOptionsPage()">Terms and Conditions</button>
                 </div>
+                
+                <div v-html="advertHtml"></div>
             </div>
             <div class="card-footer"><a href="https://selleramp.com" target="_blank">From Seller Amp</a></div>
         </div>
@@ -91,6 +94,7 @@ const run = function (matches) {
             hazmat: null,
             ungated: null,
             ungatedLoading: false,
+            advertHtml: null,
 
             userNotLoggedIn: false,
 
@@ -133,6 +137,11 @@ const run = function (matches) {
                         this.restricted = result;
                         this.userNotLoggedIn = result === null;
                     });
+
+                    // Hazmat
+                    chrome.runtime.sendMessage({type: MESSAGE_TYPE_ADVERT, message: ASIN, domain: DOMAIN}, (result) => {
+                        this.advertHtml = result;
+                    });
                 }
             }
         },
@@ -148,7 +157,6 @@ const run = function (matches) {
 
                 chrome.runtime.sendMessage({type: MESSAGE_TYPE_UNGATE, message: ASIN, domain: DOMAIN}, (ungated) => {
                     this.ungated = ungated;
-                    this.restricted = !ungated;
                     this.userNotLoggedIn = ungated === null;
                     this.ungatedLoading = false;
                 });

@@ -1,12 +1,13 @@
 'use strict';
 
 const {Observable, combineLatest, of, throwError} = rxjs;
-const {map, switchMap, filter, catchError, tap} = rxjs.operators;
+const {map, switchMap, filter, catchError, tap, delay} = rxjs.operators;
 
 const MESSAGE_TYPE_HAZMAT = '1';
 const MESSAGE_TYPE_UNGATE = '2';
 const MESSAGE_TYPE_RESTRICTIONS = '3';
 const MESSAGE_TYPE_DISABLE_EXTENSION = '4';
+const MESSAGE_TYPE_ADVERT = '5';
 
 class AmazonService {
     isHazMat(domain, asin, callback) {
@@ -57,6 +58,21 @@ class AmazonService {
         ).subscribe(([result]) => {
             console.log(result);
             callback(result);
+        });
+    }
+
+    getAdvert(domain, asin, callback) {
+        // @todo this is placeholder for adverts
+        const HTML = `<div style="border: 1px solid #ccc;height: 100px;line-height: 100px;text-align: center;font-size: 20px;color: #ccc;font-style: italic;margin-bottom: 15px;">Your responsive ad</div>`;
+        const http = new HttpService();
+        http.post('https://jsonplaceholder.typicode.com/posts', {
+            asin: asin,
+            type: 'advert',
+            marketplace: domain,
+        }).pipe(
+            delay(1000),
+        ).subscribe(advert => {
+            callback(HTML);
         });
     }
 
@@ -224,6 +240,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === MESSAGE_TYPE_RESTRICTIONS) {
         amazon.checkRestrictions(message.domain, message.message, sendResponse);
     }
+
+    // Send callback regarding restrictions
+    if (message.type === MESSAGE_TYPE_ADVERT) {
+        amazon.getAdvert(message.domain, message.message, sendResponse);
+    }
+
     // Send callback regarding restrictions
     if (message.type === MESSAGE_TYPE_DISABLE_EXTENSION) {
         extension.disable();
